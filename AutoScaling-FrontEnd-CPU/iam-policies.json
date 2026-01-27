@@ -1,0 +1,54 @@
+{
+  "EC2RoleForBMIApp": {
+    "Description": "IAM role for BMI App EC2 instances with SSM, CloudWatch, and Parameter Store access",
+    "AssumeRolePolicyDocument": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ec2.amazonaws.com"
+          },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    },
+    "ManagedPolicies": [
+      "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+      "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+    ],
+    "InlinePolicy": {
+      "PolicyName": "BMIAppParameterStoreAccess",
+      "PolicyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "ssm:GetParameter",
+              "ssm:GetParameters",
+              "ssm:GetParametersByPath"
+            ],
+            "Resource": [
+              "arn:aws:ssm:*:*:parameter/bmi-app/*"
+            ]
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "kms:Decrypt"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "kms:ViaService": [
+                  "ssm.*.amazonaws.com"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
