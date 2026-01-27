@@ -118,9 +118,9 @@ Internet
 
 1. Go to **EC2** → **Security Groups** → **Create security group**
 2. Configure:
-   - **Name**: `auroradevops`
+   - **Name**: `aurora-sg`
    - **Description**: `Security group for Aurora PostgreSQL`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
 3. **Inbound rules**:
    - Type: `PostgreSQL` (5432)
    - Source: `10.0.0.0/16` (entire VPC)
@@ -151,7 +151,7 @@ Internet
 - **Maximum ACUs**: `2`
 devops
 **Connectivity:**
-- **VPC**: Select `bmi-vpc`
+- **VPC**: Select `devops-vpc`
 - **DB subnet group**: Select `bmi-db-subnet-group`
 - **Public access**: `No`
 - **VPC security group**: Choose existing → Select `aurora-sg`
@@ -281,9 +281,9 @@ Create these 5 parameters:
 
 1. Go to **EC2** → **Security Groups** → **Create security group**
 2. Configure:
-   - **Name**: `frontedevopsalb-sg`
+   - **Name**: `frontend-alb-sg`
    - **Description**: `Security group for Frontend ALB`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
 3. **Inbound rules**:
    - Type: `HTTP` (80), Source: `0.0.0.0/0`, Description: `Allow HTTP from internet`
    - Type: `HTTPS` (443), Source: `0.0.0.0/0`, Description: `Allow HTTPS from internet`
@@ -482,9 +482,9 @@ nginx -v         # nginx version
 
 1. **Create target group**:
    - **Target type**: `Instances`
-   - **Name**: `bmi-frdevopsend-tg`
+   - **Name**: `bmi-frontend-tg`
    - **Protocol**: `HTTP`, Port: `80`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
    - **Health check**:
      - Path: `/health`
      - Interval: `10 seconds`
@@ -497,12 +497,12 @@ nginx -v         # nginx version
 
 1. **Create Load Balancer** → **Application Load Balancer**
 2. Configure:
-   - **Name**: `bmi-frdevops-vpc`
+   - **Name**: `bmi-frontend-alb`
+   - **Scheme**: `Internet-facing`
+   - **VPC**: Select `devops-vpc`
    - **Mappings**: Select **both AZs** and **both public subnets**:
      - ap-south-1a: `devops-subnet-public1-ap-south-1a`
      - ap-south-1b: `devops-subnet-public2-ap-south-1b`
-   - **VPC**: Select `bmi-vpc`
-   - **Mappings**: Select **both AZs** and **both public subnets**
    - **Security groups**: Select `frontend-alb-sg`
    - **Listeners**: HTTP (80) → Forward to `bmi-frontend-tg`
 3. Click **Create load balancer**
@@ -518,12 +518,12 @@ nginx -v         # nginx version
 1. Go to **EC2** → **Launch instance**
 2. Configure:
    - **Name**: `bmi-backend-1`
-   - **AMI**:devops-vpc`
-     - Subnet: Select `devops-subnet-private1-ap-south-1a`
+   - **AMI**: Select `bmi-backend-golden-ami` (from Phase 6.3)
+   - **Instance type**: `t3.micro`
    - **Key pair**: Not needed (using SSM)
    - **Network**:
-     - VPC: `bmi-vpc`
-     - Subnet: Select **first private subnet**
+     - VPC: `devops-vpc`
+     - Subnet: Select `devops-subnet-private1-ap-south-1a`
      - Auto-assign public IP: `Disable`
    - **Security group**: Select `backend-ec2-sg`
    - **IAM instance profile**: Select `EC2RoleForBMIApp`
@@ -538,7 +538,7 @@ chmod +x deploy-backend.sh
 
 3. Click **Launch instance**
 
-### Step 8.2: Launch Bac`devops-subnet-private2-ap-south-1b`
+### Step 8.2: Launch Backend Instance 2
 
 1. Repeat above steps with:
    - **Name**: `bmi-backend-2`
@@ -594,14 +594,14 @@ chmod +x deploy-frontend.sh
 1. Go to **EC2** → **Auto Scaling Groups** → **Create Auto Scaling group**
 2. **Step 1: Choose launch template**
    - **Name**: `bmi-frontend-asg`
-   - **Launch templatedevops-vpc`
+   - **Launch template**: Select `bmi-frontend-lt`
+   - Click **Next**
+
+3. **Step 2: Network**
+   - **VPC**: Select `devops-vpc`
    - **Availability Zones and subnets**: Select **both private subnets**:
      - `devops-subnet-private1-ap-south-1a`
      - `devops-subnet-private2-ap-south-1b`
-
-3. **Step 2: Network**
-   - **VPC**: Select `bmi-vpc`
-   - **Availability Zones and subnets**: Select **both private subnets**
    - Click **Next**
 
 4. **Step 3: Load balancing**

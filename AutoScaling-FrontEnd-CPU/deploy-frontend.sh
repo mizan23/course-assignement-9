@@ -113,6 +113,10 @@ EOF
 # Replace placeholder with actual backend URL in nginx config
 sudo sed -i "s|\${BACKEND_ALB_URL}|${BACKEND_ALB_URL}|g" /etc/nginx/conf.d/frontend.conf
 
+# Remove conflicting default server block from nginx.conf
+echo "Removing default nginx server block to avoid conflicts..."
+sudo sed -i '37,54s/^/# /' /etc/nginx/nginx.conf
+
 # Test nginx configuration
 echo "Testing nginx configuration..."
 sudo nginx -t
