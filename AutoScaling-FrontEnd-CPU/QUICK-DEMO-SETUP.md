@@ -45,29 +45,24 @@ Internet
 
 ---
 
-## Phase 1: Network Setup (10 minutes)
+## Phase 1: Network Setup (5 minutes)
 
-### Step 1.1: Create VPC
+### Step 1.1: Use Existing VPC ✅
 
-1. Go to **VPC Dashboard** → **Create VPC**
-2. Choose **VPC and more** (launches VPC wizard)
-3. Configure:
-   - **Name**: `bmi-vpc`
-   - **IPv4 CIDR**: `10.0.0.0/16`
-   - **Availability Zones**: `2`
-   - **Public subnets**: `2`
-   - **Private subnets**: `2`
-   - **NAT gateways**: `1` (in 1 AZ only - cost savings)
-   - **VPC endpoints**: `S3 Gateway` (free)
-4. Click **Create VPC**
-5. Wait ~3-4 minutes for creation
+**You already have the VPC infrastructure!** We'll use:
+- **VPC**: `devops-vpc` (10.0.0.0/16)
+- **Region**: `ap-south-1` (Mumbai)
+- **Public Subnets**:
+  - `devops-subnet-public1-ap-south-1a` (10.0.0.0/20)
+  - `devops-subnet-public2-ap-south-1b` (10.0.16.0/20)
+- **Private Subnets**:
+  - `devops-subnet-private1-ap-south-1a` (10.0.128.0/20)
+  - `devops-subnet-private2-ap-south-1b` (10.0.144.0/20)
+- **NAT Gateway**: `devops-regional-nat` ✅ (already exists)
+- **Internet Gateway**: `devops-igw` ✅ (already exists)
+- **S3 Gateway Endpoint**: `devops-vpce-s3` ✅ (already exists)
 
-**Result:**
-- VPC: `10.0.0.0/16`
-- Public Subnets: `10.0.0.0/20`, `10.0.16.0/20`
-- Private Subnets: `10.0.128.0/20`, `10.0.144.0/20`
-- NAT Gateway in one public subnet
-- Internet Gateway attached
+**No VPC creation needed!** Skip to creating SSM endpoints.
 
 ### Step 1.2: Create VPC Endpoints for SSM
 
@@ -77,26 +72,28 @@ Internet
 
 **Endpoint 1: SSM**
 - **Name**: `bmi-ssm-endpoint`
-- **Service**: `com.amazonaws.[region].ssm`
-- **VPC**: Select `bmi-vpc`
-- **Subnets**: Select **both private subnets**
+- **Service**: `com.amazonaws.ap-south-1.ssm`
+- **VPC**: Select `devops-vpc`
+- **Subnets**: Select both private subnets:
+  - `devops-subnet-private1-ap-south-1a`
+  - `devops-subnet-private2-ap-south-1b`
 - **Security group**: Create new → `ssm-endpoint-sg`
   - Inbound: HTTPS (443) from `10.0.0.0/16`
 - Click **Create endpoint**
 
 **Endpoint 2: EC2 Messages**
 - **Name**: `bmi-ec2messages-endpoint`
-- **Service**: `com.amazonaws.[region].ec2messages`
-- **VPC**: Select `bmi-vpc`
-- **Subnets**: Select **both private subnets**
+- **Service**: `com.amazonaws.ap-south-1.ec2messages`
+- **VPC**: Select `devops-vpc`
+- **Subnets**: Select both private subnets (same as above)
 - **Security group**: Select `ssm-endpoint-sg`
 - Click **Create endpoint**
 
 **Endpoint 3: SSM Messages**
 - **Name**: `bmi-ssmmessages-endpoint`
-- **Service**: `com.amazonaws.[region].ssmmessages`
-- **VPC**: Select `bmi-vpc`
-- **Subnets**: Select **both private subnets**
+- **Service**: `com.amazonaws.ap-south-1.ssmmessages`
+- **VPC**: Select `devops-vpc`
+- **Subnets**: Select both private subnets (same as above)
 - **Security group**: Select `ssm-endpoint-sg`
 - Click **Create endpoint**
 
@@ -110,16 +107,18 @@ Internet
 2. Configure:
    - **Name**: `bmi-db-subnet-group`
    - **Description**: `Subnet group for BMI Aurora cluster`
-   - **VPC**: Select `bmi-vpc`
-   - **Availability Zones**: Select **both AZs**
-   - **Subnets**: Select **both private subnets** (10.0.128.0/20, 10.0.144.0/20)
+   - **VPC**: Select `devops-vpc`
+   - **Availability Zones**: Select **ap-south-1a** and **ap-south-1b**
+   - **Subnets**: Select **both private subnets**:
+     - `devops-subnet-private1-ap-south-1a` (10.0.128.0/20)
+     - `devops-subnet-private2-ap-south-1b` (10.0.144.0/20)
 3. Click **Create**
 
 ### Step 2.2: Create Aurora Security Group
 
 1. Go to **EC2** → **Security Groups** → **Create security group**
 2. Configure:
-   - **Name**: `aurora-sg`
+   - **Name**: `auroradevops`
    - **Description**: `Security group for Aurora PostgreSQL`
    - **VPC**: Select `bmi-vpc`
 3. **Inbound rules**:
@@ -150,7 +149,7 @@ Internet
 - **DB instance class**: `Serverless v2`
 - **Minimum ACUs**: `0.5`
 - **Maximum ACUs**: `2`
-
+devops
 **Connectivity:**
 - **VPC**: Select `bmi-vpc`
 - **DB subnet group**: Select `bmi-db-subnet-group`
@@ -282,7 +281,7 @@ Create these 5 parameters:
 
 1. Go to **EC2** → **Security Groups** → **Create security group**
 2. Configure:
-   - **Name**: `frontend-alb-sg`
+   - **Name**: `frontedevopsalb-sg`
    - **Description**: `Security group for Frontend ALB`
    - **VPC**: Select `bmi-vpc`
 3. **Inbound rules**:
@@ -296,7 +295,7 @@ Create these 5 parameters:
 1. **Create security group**:
    - **Name**: `frontend-ec2-sg`
    - **Description**: `Security group for Frontend EC2 instances`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
 2. **Inbound rules**:
    - Type: `HTTP` (80), Source: Select `frontend-alb-sg`, Description: `Allow from Frontend ALB`
    - Type: `HTTPS` (443), Source: `10.0.0.0/16`, Description: `Allow HTTPS within VPC`
@@ -307,7 +306,7 @@ Create these 5 parameters:
 1. **Create security group**:
    - **Name**: `backend-alb-sg`
    - **Description**: `Security group for Backend Internal ALB`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
 2. **Inbound rules**:
    - Type: `HTTP` (80), Source: Select `frontend-ec2-sg`, Description: `Allow from Frontend EC2`
 3. Click **Create security group**
@@ -317,7 +316,7 @@ Create these 5 parameters:
 1. **Create security group**:
    - **Name**: `backend-ec2-sg`
    - **Description**: `Security group for Backend EC2 instances`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
 2. **Inbound rules**:
    - Type: `Custom TCP` (3000), Source: Select `backend-alb-sg`, Description: `Allow from Backend ALB`
 3. Click **Create security group**
@@ -343,8 +342,8 @@ Create these 5 parameters:
    - **Instance type**: `t3.micro`
    - **Key pair**: Select existing or create new
    - **Network**:
-     - VPC: `bmi-vpc`
-     - Subnet: Select a **public subnet** (for initial setup)
+     - VPC: `devops-vpc`
+     - Subnet: Select `devops-subnet-public1-ap-south-1a` (for initial setup)
      - Auto-assign public IP: `Enable`
    - **Security group**: Create new → Allow SSH (22) from your IP
    - **IAM instance profile**: Select `EC2RoleForBMIApp`
@@ -440,7 +439,7 @@ nginx -v         # nginx version
    - **Target type**: `Instances`
    - **Name**: `bmi-backend-tg`
    - **Protocol**: `HTTP`, Port: `3000`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
    - **Health check**:
      - Protocol: `HTTP`
      - Path: `/health`
@@ -460,8 +459,10 @@ nginx -v         # nginx version
    - **Name**: `bmi-backend-alb`
    - **Scheme**: `Internal` ⚠️ (not internet-facing)
    - **IP address type**: `IPv4`
-   - **VPC**: Select `bmi-vpc`
-   - **Mappings**: Select **both AZs** and **both private subnets**
+   - **VPC**: Select `devops-vpc`
+   - **Mappings**: Select **both AZs** and **both private subnets**:
+     - ap-south-1a: `devops-subnet-private1-ap-south-1a`
+     - ap-south-1b: `devops-subnet-private2-ap-south-1b`
    - **Security groups**: Select `backend-alb-sg`
    - **Listeners**: HTTP (80)
    - **Default action**: Forward to `bmi-backend-tg`
@@ -481,7 +482,7 @@ nginx -v         # nginx version
 
 1. **Create target group**:
    - **Target type**: `Instances`
-   - **Name**: `bmi-frontend-tg`
+   - **Name**: `bmi-frdevopsend-tg`
    - **Protocol**: `HTTP`, Port: `80`
    - **VPC**: Select `bmi-vpc`
    - **Health check**:
@@ -496,8 +497,10 @@ nginx -v         # nginx version
 
 1. **Create Load Balancer** → **Application Load Balancer**
 2. Configure:
-   - **Name**: `bmi-frontend-alb`
-   - **Scheme**: `Internet-facing` ⚠️
+   - **Name**: `bmi-frdevops-vpc`
+   - **Mappings**: Select **both AZs** and **both public subnets**:
+     - ap-south-1a: `devops-subnet-public1-ap-south-1a`
+     - ap-south-1b: `devops-subnet-public2-ap-south-1b`
    - **VPC**: Select `bmi-vpc`
    - **Mappings**: Select **both AZs** and **both public subnets**
    - **Security groups**: Select `frontend-alb-sg`
@@ -515,8 +518,8 @@ nginx -v         # nginx version
 1. Go to **EC2** → **Launch instance**
 2. Configure:
    - **Name**: `bmi-backend-1`
-   - **AMI**: Select **My AMIs** → Choose `bmi-backend-golden-ami`
-   - **Instance type**: `t3.micro`
+   - **AMI**:devops-vpc`
+     - Subnet: Select `devops-subnet-private1-ap-south-1a`
    - **Key pair**: Not needed (using SSM)
    - **Network**:
      - VPC: `bmi-vpc`
@@ -535,7 +538,7 @@ chmod +x deploy-backend.sh
 
 3. Click **Launch instance**
 
-### Step 8.2: Launch Backend Instance 2
+### Step 8.2: Launch Bac`devops-subnet-private2-ap-south-1b`
 
 1. Repeat above steps with:
    - **Name**: `bmi-backend-2`
@@ -591,8 +594,10 @@ chmod +x deploy-frontend.sh
 1. Go to **EC2** → **Auto Scaling Groups** → **Create Auto Scaling group**
 2. **Step 1: Choose launch template**
    - **Name**: `bmi-frontend-asg`
-   - **Launch template**: Select `bmi-frontend-lt`
-   - Click **Next**
+   - **Launch templatedevops-vpc`
+   - **Availability Zones and subnets**: Select **both private subnets**:
+     - `devops-subnet-private1-ap-south-1a`
+     - `devops-subnet-private2-ap-south-1b`
 
 3. **Step 2: Network**
    - **VPC**: Select `bmi-vpc`
@@ -652,7 +657,7 @@ chmod +x quick-test.sh
 wget https://raw.githubusercontent.com/sarowar-alam/3-tier-web-app-auto-scalling/main/AutoScaling-FrontEnd-CPU/load-test/monitor.sh
 chmod +x monitor.sh
 ```
-
+ap-south
 ### Step 10.2: Start Monitoring
 
 Open a **second terminal** and run:

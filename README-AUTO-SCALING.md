@@ -70,18 +70,18 @@ This project contains **two complete AWS auto-scaling demonstration setups** for
 
 ## 🏗️ Architecture
 
-Both setups use the same 3-tier architecture:
+Both setups use the same 3-tier architecture in your existing **devops-vpc** (ap-south-1):
 
 ```
 Internet
    ↓
-[Public ALB] ← Frontend Load Balancer
+[Public ALB] ← Frontend Load Balancer (devops public subnets)
    ↓
-[Frontend ASG] ← 2-4 EC2 instances (AUTO-SCALES)
+[Frontend ASG] ← 2-4 EC2 instances (AUTO-SCALES, devops private subnets)
    ↓
-[Internal ALB] ← Backend Load Balancer
+[Internal ALB] ← Backend Load Balancer (devops private subnets)
    ↓
-[Backend EC2] ← 2 fixed instances (no auto-scaling)
+[Backend EC2] ← 2 fixed instances (devops private subnets)
    ↓
 [Aurora Serverless v2] ← PostgreSQL (0.5-2 ACU, auto-scales)
 ```
@@ -124,11 +124,13 @@ You can run both demos sequentially (not simultaneously):
 
 | Phase | Duration |
 |-------|----------|
-| Infrastructure Setup (Manual) | 45-60 min |
+| Infrastructure Setup (Manual) | 35-50 min* |
 | Application Deployment (Automated) | 5-10 min |
 | Load Testing & Monitoring | 15-20 min |
 | Teardown | 20-30 min |
-| **Total** | **~90-120 min** |
+| **Total** | **~75-110 min** |
+
+*Faster because you already have VPC infrastructure (`devops-vpc`) in ap-south-1!
 
 ---
 
@@ -141,7 +143,8 @@ You can run both demos sequentially (not simultaneously):
 - EC2 instances (4-6 × t3.micro): ~$0.50/hour
 - Aurora Serverless v2: ~$0.24-1.92/hour
 - ALB (2): ~$0.05/hour
-- NAT Gateway: ~$0.045/hour
+- NAT Gateway: Already exists (devops-regional-nat)
+- SSM VPC Endpoints: ~$0.03/hour
 - Data transfer: Minimal
 
 ⚠️ **IMPORTANT:** Delete all resources after demo to avoid charges!
@@ -208,14 +211,18 @@ AutoScaling-FrontEnd-[CPU|ALB-request]/
 ## 🔧 Prerequisites
 
 - AWS Account with admin access
+- **Existing VPC**: `devops-vpc` in **ap-south-1** (Mumbai) region
 - AWS CLI installed (for monitoring)
 - Apache Bench (ab) for load testing
 - Basic AWS Console knowledge
-- GitHub repo access
+- GitHub repo: `https://github.com/sarowar-alam/3-tier-web-app-auto-scalling.git`
 
 ---
 
 ## 📚 Documentation
+
+### **Infrastructure:**
+- [Existing VPC Reference](EXISTING-VPC-REFERENCE.md) ⭐ **Start here!**
 
 ### **Setup Guides:**
 - [CPU-Based Setup Guide](AutoScaling-FrontEnd-CPU/QUICK-DEMO-SETUP.md)
@@ -326,10 +333,12 @@ aws ec2 delete-nat-gateway --nat-gateway-id <id>
 
 ## 📝 Notes
 
+- Uses your **existing devops-vpc** infrastructure (ap-south-1)
 - Both setups use **Golden AMIs** for faster boot times
 - Application deployment is **fully automated** via user-data scripts
 - Infrastructure setup is **manual** (no Terraform/CloudFormation)
 - Designed for **1-hour demonstrations**
+- Won't interfere with existing devops VPC resources
 - Easily adaptable for production use
 
 ---
@@ -370,15 +379,18 @@ After completing both demos, you should be able to:
 
 ## 🎉 Ready to Start?
 
-1. **Choose your scaling strategy** (CPU or ALB request count)
-2. **Open the QUICK-DEMO-SETUP.md** in your chosen folder
-3. **Follow the step-by-step guide**
-4. **Test and observe auto-scaling**
-5. **Don't forget to tear down!**
+1. **Review your existing VPC** - Read [EXISTING-VPC-REFERENCE.md](EXISTING-VPC-REFERENCE.md)
+2. **Choose your scaling strategy** (CPU or ALB request count)
+3. **Open the QUICK-DEMO-SETUP.md** in your chosen folder
+4. **Follow the step-by-step guide** (updated for devops-vpc in ap-south-1)
+5. **Test and observe auto-scaling**
+6. **Don't forget to tear down!**
 
 **Happy auto-scaling!** 🚀
 
 ---
 
 **Last Updated:** January 2026  
+**Region:** ap-south-1 (Mumbai)  
+**VPC:** devops-vpc (existing infrastructure)  
 **AWS Services:** EC2, ALB, Auto Scaling, Aurora Serverless v2, Systems Manager, CloudWatch

@@ -50,19 +50,25 @@ Internet
 
 ---
 
-## Phase 1-6: Identical to CPU-Based Setup
+## Phase 1-6: Use Existing Infrastructure & Follow CPU-Based Setup
 
-**NOTE:** Phases 1-6 (Network, Database, IAM, Parameter Store, Security Groups, Golden AMIs) are **identical** to the CPU-based setup.
+**NOTE:** You already have the VPC infrastructure! We'll use your existing `devops-vpc` in **ap-south-1** region.
 
-Follow these phases from [AutoScaling-FrontEnd-CPU/QUICK-DEMO-SETUP.md](../AutoScaling-FrontEnd-CPU/QUICK-DEMO-SETUP.md):
-- Phase 1: Network Setup (10 minutes)
-- Phase 2: Database Setup (15 minutes)
-- Phase 3: IAM Role Setup (5 minutes)
-- Phase 4: Parameter Store Configuration (3 minutes)
-- Phase 5: Security Groups Setup (5 minutes)
-- Phase 6: Create Golden AMIs (20 minutes)
+**Phase 1:** Use existing VPC (see CPU-based guide - already updated)
+- ✅ VPC: `devops-vpc` (10.0.0.0/16)
+- ✅ Region: `ap-south-1` (Mumbai)
+- ✅ NAT Gateway: `devops-regional-nat` (exists)
+- ✅ Internet Gateway: `devops-igw` (exists)
+- ⚠️ Need to create: SSM VPC endpoints only
 
-**The difference starts from Phase 7 onwards with the ALB and ASG configuration.**
+**Phases 2-6:** Follow [AutoScaling-FrontEnd-CPU/QUICK-DEMO-SETUP.md](../AutoScaling-FrontEnd-CPU/QUICK-DEMO-SETUP.md):
+- Phase 2: Database Setup (15 minutes) - Use `devops-vpc` subnets
+- Phase 3: IAM Role Setup (5 minutes) - Identical
+- Phase 4: Parameter Store Configuration (3 minutes) - Identical
+- Phase 5: Security Groups Setup (5 minutes) - Use `devops-vpc`
+- Phase 6: Create Golden AMIs (20 minutes) - Use `devops-subnet-public1-ap-south-1a`
+
+**The difference starts from Phase 7 onwards with the ALB request count scaling configuration.**
 
 ---
 
@@ -82,7 +88,7 @@ Follow steps 7.1-7.3 from CPU-based setup to create:
    - **Target type**: `Instances`
    - **Name**: `bmi-frontend-tg`
    - **Protocol**: `HTTP`, Port: `80`
-   - **VPC**: Select `bmi-vpc`
+   - **VPC**: Select `devops-vpc`
    - **Health check**:
      - Path: `/health`
      - Interval: `10 seconds`
@@ -101,8 +107,10 @@ Follow steps 7.1-7.3 from CPU-based setup to create:
    - **Name**: `bmi-frontend-alb`
    - **Scheme**: `Internet-facing` ⚠️
    - **IP address type**: `IPv4`
-   - **VPC**: Select `bmi-vpc`
-   - **Mappings**: Select **both AZs** and **both public subnets**
+   - **VPC**: Select `devops-vpc`
+   - **Mappings**: Select **both AZs** and **both public subnets**:
+     - ap-south-1a: `devops-subnet-public1-ap-south-1a`
+     - ap-south-1b: `devops-subnet-public2-ap-south-1b`
    - **Security groups**: Select `frontend-alb-sg`
    - **Listeners**: HTTP (80) → Forward to `bmi-frontend-tg`
 4. Click **Create load balancer**
@@ -163,8 +171,10 @@ chmod +x deploy-frontend.sh
    - Click **Next**
 
 3. **Step 2: Network**
-   - **VPC**: Select `bmi-vpc`
-   - **Availability Zones and subnets**: Select **both private subnets**
+   - **VPC**: Select `devops-vpc`
+   - **Availability Zones and subnets**: Select **both private subnets**:
+     - `devops-subnet-private1-ap-south-1a`
+     - `devops-subnet-private2-ap-south-1b`
    - Click **Next**
 
 4. **Step 3: Load balancing**
@@ -230,7 +240,7 @@ chmod +x monitor.sh
 Open a **second terminal** and run:
 
 ```bash
-./monitor.sh bmi-frontend-asg-alb us-east-1
+./monitor.sh bmi-frontend-asg-alb ap-south-1
 ```
 
 This will show real-time ASG status and instance metrics.
