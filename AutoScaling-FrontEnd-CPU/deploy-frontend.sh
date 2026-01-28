@@ -32,13 +32,13 @@ fi
 git clone https://github.com/sarowar-alam/3-tier-web-app-auto-scalling.git app
 cd app/frontend
 
-# Update API endpoint to point to backend ALB
+# Update API endpoint to use relative URL (nginx will proxy to backend ALB)
 echo "Updating API endpoint..."
-cat > src/api.js << EOF
+cat > src/api.js << 'EOF'
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '${BACKEND_ALB_URL}',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },

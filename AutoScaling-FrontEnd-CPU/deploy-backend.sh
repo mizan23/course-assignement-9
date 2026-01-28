@@ -119,7 +119,7 @@ pm2 save
 
 # Set PM2 to start on system boot
 echo "Configuring PM2 to start on boot..."
-sudo env PATH=$PATH:/usr/bin:/usr/local/bin pm2 startup systemd -u root --hp /root -y || true
+sudo env PATH=$PATH:/usr/bin:/usr/local/bin pm2 startup systemd -u root --hp /root || true
 pm2 save || true
 
 echo "========================================="
