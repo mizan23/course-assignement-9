@@ -18,7 +18,6 @@ provider "aws" {
       Project     = "BMI-AutoScaling"
       Environment = var.environment
       ManagedBy   = "Terraform"
-      CreatedDate = formatdate("YYYY-MM-DD", timestamp())
     }
   }
 }

@@ -1,6 +1,6 @@
 # Backend Target Group (Port 3000 for Node.js)
 resource "aws_lb_target_group" "backend" {
-  name_prefix = "${substr(var.project_name, 0, 3)}-be-"
+  name_prefix = "bmibe-"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -32,7 +32,7 @@ resource "aws_lb_target_group" "backend" {
 
 # Backend ALB (Internal)
 resource "aws_lb" "backend" {
-  name_prefix        = "${substr(var.project_name, 0, 3)}-be-"
+  name_prefix        = "bmibe"
   internal           = true
   load_balancer_type = "application"
   security_groups    = [var.backend_alb_sg_id]
@@ -65,7 +65,7 @@ resource "aws_lb_listener" "backend" {
 
 # Frontend Target Group (Port 80 for nginx)
 resource "aws_lb_target_group" "frontend" {
-  name_prefix = "${substr(var.project_name, 0, 3)}-fe-"
+  name_prefix = "bmife-"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -97,7 +97,7 @@ resource "aws_lb_target_group" "frontend" {
 
 # Frontend ALB (Public)
 resource "aws_lb" "frontend" {
-  name_prefix        = "${substr(var.project_name, 0, 3)}-fe-"
+  name_prefix        = "bmife-"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.frontend_alb_sg_id]
