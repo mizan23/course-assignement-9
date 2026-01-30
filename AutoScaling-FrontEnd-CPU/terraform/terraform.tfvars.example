@@ -1,0 +1,38 @@
+# AWS Configuration
+aws_region   = "ap-south-1"
+aws_profile  = "sarowar-ostad"  # Your AWS CLI profile name
+environment  = "demo"
+project_name = "bmi"
+
+# Golden AMI IDs (Provided by instructor - DO NOT CHANGE)
+backend_ami_id  = "ami-032e8cf6d0d558851"  # Backend Golden AMI
+frontend_ami_id = "ami-0dab0b890a96c6f37"  # Frontend Golden AMI
+
+# Database Configuration
+db_name     = "bmidb"
+db_username = "postgres"
+db_password = "YourSecurePassword123!"  # ⚠️ CHANGE THIS!
+
+# Aurora Serverless v2 Capacity (Cost-optimized for demo)
+aurora_min_capacity = 0.5  # Minimum ACUs
+aurora_max_capacity = 2    # Maximum ACUs
+
+# Instance Configuration (Cost-optimized for demo)
+backend_instance_type  = "t3.micro"
+frontend_instance_type = "t3.micro"
+backend_instance_count = 2  # Fixed instances
+
+# Frontend Auto Scaling Configuration
+frontend_asg_min_size              = 1
+frontend_asg_max_size              = 4
+frontend_asg_desired_capacity      = 2
+frontend_cpu_target                = 60  # Target CPU %
+frontend_warmup_time               = 60  # seconds
+frontend_health_check_grace_period = 300 # seconds (5 minutes)
+
+# Additional Tags (Optional)
+additional_tags = {
+  Owner      = "YourName"
+  Course     = "Ostad-DevOps-Batch-08"
+  CostCenter = "Training"
+}
