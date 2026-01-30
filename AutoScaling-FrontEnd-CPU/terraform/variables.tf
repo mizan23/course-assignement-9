@@ -22,6 +22,32 @@ variable "project_name" {
   default     = "bmi"
 }
 
+# Existing VPC Infrastructure IDs
+variable "vpc_id" {
+  description = "ID of existing VPC"
+  type        = string
+}
+
+variable "public_subnet_1a_id" {
+  description = "ID of existing public subnet in AZ 1a"
+  type        = string
+}
+
+variable "public_subnet_1b_id" {
+  description = "ID of existing public subnet in AZ 1b"
+  type        = string
+}
+
+variable "private_subnet_1a_id" {
+  description = "ID of existing private subnet in AZ 1a"
+  type        = string
+}
+
+variable "private_subnet_1b_id" {
+  description = "ID of existing private subnet in AZ 1b"
+  type        = string
+}
+
 # Golden AMI IDs (Pre-built by instructor)
 variable "backend_ami_id" {
   description = "Golden AMI ID for backend EC2 instances"

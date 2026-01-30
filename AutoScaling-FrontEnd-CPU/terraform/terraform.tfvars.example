@@ -4,6 +4,13 @@ aws_profile  = "sarowar-ostad"  # Your AWS CLI profile name
 environment  = "demo"
 project_name = "bmi"
 
+# Existing VPC Infrastructure IDs (⚠️ REQUIRED - Get from AWS Console or CLI)
+vpc_id               = "vpc-xxxxxxxxxxxxxxxxx"        # VPC ID
+public_subnet_1a_id  = "subnet-xxxxxxxxxxxxxxxxx"     # Public subnet in AZ 1a
+public_subnet_1b_id  = "subnet-xxxxxxxxxxxxxxxxx"     # Public subnet in AZ 1b
+private_subnet_1a_id = "subnet-xxxxxxxxxxxxxxxxx"     # Private subnet in AZ 1a
+private_subnet_1b_id = "subnet-xxxxxxxxxxxxxxxxx"     # Private subnet in AZ 1b
+
 # Golden AMI IDs (Provided by instructor - DO NOT CHANGE)
 backend_ami_id  = "ami-032e8cf6d0d558851"  # Backend Golden AMI
 frontend_ami_id = "ami-0dab0b890a96c6f37"  # Frontend Golden AMI
@@ -21,6 +28,9 @@ aurora_max_capacity = 2    # Maximum ACUs
 backend_instance_type  = "t3.micro"
 frontend_instance_type = "t3.micro"
 backend_instance_count = 2  # Fixed instances
+
+# GitHub Repository (Change if you forked the repository)
+github_repo_url = "https://github.com/sarowar-alam/3-tier-web-app-auto-scalling.git"
 
 # Frontend Auto Scaling Configuration
 frontend_asg_min_size              = 1

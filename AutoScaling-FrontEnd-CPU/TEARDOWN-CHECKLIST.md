@@ -217,3 +217,11 @@ All resources deleted when:
 ---
 
 **Done!** 🎉 Your demo infrastructure is fully cleaned up.
+
+---
+## 🧑‍💻 Author
+*Md. Sarowar Alam*  
+Lead DevOps Engineer, Hogarth Worldwide  
+📧 Email: sarowar@hotmail.com  
+🔗 LinkedIn: [linkedin.com/in/sarowar](https://www.linkedin.com/in/sarowar/)
+---

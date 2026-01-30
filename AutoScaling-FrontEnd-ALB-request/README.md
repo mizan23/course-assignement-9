@@ -490,3 +490,11 @@ For issues with this setup:
 **Demo complete! 🎉** 
 
 Now you can compare CPU-based vs ALB request count scaling!
+
+---
+## 🧑‍💻 Author
+*Md. Sarowar Alam*  
+Lead DevOps Engineer, Hogarth Worldwide  
+📧 Email: sarowar@hotmail.com  
+🔗 LinkedIn: [linkedin.com/in/sarowar](https://www.linkedin.com/in/sarowar/)
+---

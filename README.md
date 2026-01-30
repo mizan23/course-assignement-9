@@ -98,39 +98,86 @@ Internet
 
 ## 🚀 Quick Start
 
-### Choose Your Setup:
+### Choose Your Deployment Method:
 
-#### **Option A: CPU-Based Scaling**
+#### **🎯 Option 1: Terraform (IaC) - RECOMMENDED** ⚡
+**Automated, fast, repeatable infrastructure deployment**
+
+```bash
+cd AutoScaling-FrontEnd-CPU/terraform
+# Follow terraform/README.md for complete setup
+terraform init -backend-config=backend.hcl
+terraform plan
+terraform apply
+```
+
+**Features:**
+- ✅ **15-20 minute deployment** (vs 60+ minutes manual)
+- ✅ **Automated resource creation** - 40+ AWS resources
+- ✅ **Infrastructure as Code** - Version controlled, reusable
+- ✅ **Modular design** - 7 modules for clean architecture
+- ✅ **Easy cleanup** - `terraform destroy` removes everything
+- ✅ **Production-ready** - Proper tagging, security, dependencies
+
+📖 **Full Guide:** [AutoScaling-FrontEnd-CPU/terraform/README.md](AutoScaling-FrontEnd-CPU/terraform/README.md)
+
+---
+
+#### **🔧 Option 2: Manual Setup (AWS Console)**
+**Step-by-step learning for understanding each component**
+
+**Setup A: CPU-Based Scaling**
 ```bash
 cd AutoScaling-FrontEnd-CPU
-cat QUICK-DEMO-SETUP.md
+# Follow README.md for manual AWS Console setup
 ```
 
-#### **Option B: ALB Request Count Scaling**
+**Setup B: ALB Request Count Scaling**
 ```bash
 cd AutoScaling-FrontEnd-ALB-request
-cat QUICK-DEMO-SETUP.md
+# Follow README.md for manual AWS Console setup
 ```
+
+**Features:**
+- ✅ **Educational** - Learn each AWS service in detail
+- ✅ **Two scaling strategies** - Compare CPU vs Request Count
+- ✅ **AWS Console experience** - Hands-on with UI
+- ⚠️ **Time-intensive** - 60-75 minutes per setup
+
+---
 
 ### **Want to try both?** 
 You can run both demos sequentially (not simultaneously):
-1. Complete Setup 1, test, teardown
-2. Complete Setup 2, test, teardown
-3. Compare the results!
+1. Deploy with Terraform OR manual setup
+2. Test auto-scaling behavior
+3. Complete teardown
+4. Try alternative scaling strategy (if manual)
+5. Compare the results!
 
 ---
 
 ## ⏱️ Time Estimates
 
+### Terraform Deployment (Recommended)
 | Phase | Duration |
 |-------|----------|
-| Infrastructure Setup (Manual) | 35-50 min* |
+| Terraform Init & Plan | 2-3 min |
+| Terraform Apply (Infrastructure) | 15-20 min* |
+| Load Testing & Monitoring | 15-20 min |
+| Terraform Destroy | 10-15 min |
+| **Total** | **~45-60 min** |
+
+### Manual Setup (AWS Console)
+| Phase | Duration |
+|-------|----------|
+| Infrastructure Setup (Manual) | 35-50 min** |
 | Application Deployment (Automated) | 5-10 min |
 | Load Testing & Monitoring | 15-20 min |
 | Teardown | 20-30 min |
 | **Total** | **~75-110 min** |
 
-*Faster because you already have VPC infrastructure (`devops-vpc`) in ap-south-1!
+*Aurora Serverless v2 creation takes 10-12 minutes (longest single step)  
+**Faster because you already have VPC infrastructure (`devops-vpc`) in ap-south-1!
 
 ---
 
@@ -312,22 +359,129 @@ For detailed troubleshooting, see setup guides.
 
 **⚠️ CRITICAL:** Always follow the teardown checklist to avoid unexpected charges!
 
-**Quick cleanup commands:**
+### Terraform Cleanup (Recommended)
 ```bash
-# Delete ASG (will terminate instances)
-aws autoscaling delete-auto-scaling-group --auto-scaling-group-name <name> --force-delete
-
-# Delete ALBs
-aws elbv2 delete-load-balancer --load-balancer-arn <arn>
-
-# Delete Aurora cluster
-aws rds delete-db-cluster --db-cluster-identifier <name> --skip-final-snapshot
-
-# Delete NAT Gateway
-aws ec2 delete-nat-gateway --nat-gateway-id <id>
+cd AutoScaling-FrontEnd-CPU/terraform
+terraform destroy -auto-approve
+# Verify all resources deleted in AWS Console
 ```
 
-**Or follow the detailed checklists for manual deletion.**
+**Time:** ~10-15 minutes  
+**Advantage:** Automated, ensures all resources are removed
+
+### Manual Cleanup
+Follow the detailed teardown checklists:
+- [CPU-Based Setup Teardown](AutoScaling-FrontEnd-CPU/TEARDOWN-CHECKLIST.md)
+- [ALB Request Count Setup Teardown](AutoScaling-FrontEnd-ALB-request/TEARDOWN-CHECKLIST.md)
+
+**Time:** ~20-30 minutes  
+**Important:** Must follow sequence to avoid orphaned resources
+
+---
+
+## 📚 Project Structure
+
+```
+3-tier-web-app-auto-scalling/
+├── README.md                          # This file - Project overview
+├── EXISTING-VPC-REFERENCE.md          # VPC infrastructure details
+├── .gitignore                         # Git ignore rules
+│
+├── backend/                           # Node.js Express API source
+├── frontend/                          # React + Vite UI source
+├── database/                          # PostgreSQL setup scripts
+│
+├── AutoScaling-FrontEnd-CPU/         # CPU-based scaling setup
+│   ├── README.md                      # Manual setup guide (CPU-based)
+│   ├── TEARDOWN-CHECKLIST.md          # Manual teardown steps
+│   ├── deploy-backend.sh              # Backend deployment script
+│   ├── deploy-frontend.sh             # Frontend deployment script
+│   ├── load-test/                     # Load testing scripts
+│   └── terraform/                     # 🎯 TERRAFORM IaC
+│       ├── README.md                  # Terraform deployment guide
+│       ├── backend.hcl                # S3 backend configuration
+│       ├── terraform.tfvars           # Your configuration values
+│       ├── terraform.tfvars.example   # Template for students
+│       ├── providers.tf               # AWS provider setup
+│       ├── variables.tf               # Input variables
+│       ├── main.tf                    # Root module orchestration
+│       ├── outputs.tf                 # Infrastructure outputs
+│       ├── data.tf                    # VPC data sources
+│       └── modules/                   # 7 reusable modules
+│           ├── network/               # VPC endpoints, security groups
+│           ├── database/              # Aurora Serverless v2
+│           ├── iam/                   # EC2 roles & policies
+│           ├── parameter_store/       # SSM parameters
+│           ├── load_balancing/        # ALBs & target groups
+│           ├── compute_backend/       # Backend EC2 instances
+│           └── compute_frontend/      # Frontend ASG
+│
+└── AutoScaling-FrontEnd-ALB-request/ # ALB request count scaling
+    ├── README.md                      # Manual setup guide (ALB-based)
+    ├── TEARDOWN-CHECKLIST.md          # Manual teardown steps
+    └── [similar structure to CPU folder]
+```
+
+---
+
+## 🎓 Learning Outcomes
+
+After completing this project, you will understand:
+
+### Infrastructure & Architecture
+- ✅ 3-tier application architecture design
+- ✅ Multi-AZ high availability patterns
+- ✅ Private vs public subnet security
+- ✅ VPC networking (NAT, IGW, endpoints)
+- ✅ **Infrastructure as Code with Terraform**
+- ✅ **Terraform module design patterns**
+
+### Auto-Scaling Concepts
+- ✅ CPU-based vs request-based scaling strategies
+- ✅ Target tracking scaling policies
+- ✅ Launch templates and ASG configuration
+- ✅ Cooldown periods and warmup time
+- ✅ CloudWatch metrics for scaling decisions
+
+### AWS Services
+- ✅ EC2 Auto Scaling Groups
+- ✅ Application Load Balancers (public and internal)
+- ✅ Aurora Serverless v2 auto-scaling compute
+- ✅ Systems Manager (Session Manager, Parameter Store)
+- ✅ VPC Endpoints for private access
+- ✅ IAM roles and policies for EC2
+- ✅ CloudWatch monitoring and alarms
+
+### DevOps Practices
+- ✅ Golden AMI creation workflow
+- ✅ User-data scripts for bootstrapping
+- ✅ Load testing and capacity planning
+- ✅ **Terraform state management (S3 backend)**
+- ✅ **Modular IaC architecture**
+- ✅ Cost optimization strategies
+- ✅ Proper resource teardown procedures
+
+---
+
+## 🚀 Next Steps & Enhancements
+
+**Completed:**
+- ✅ Manual AWS Console setup guides
+- ✅ **Complete Terraform IaC implementation**
+- ✅ **7 reusable Terraform modules**
+- ✅ Two auto-scaling strategies (CPU & ALB request count)
+- ✅ Load testing scripts
+- ✅ Golden AMI workflow
+
+**Future Enhancements:**
+- 🔄 CI/CD pipeline with Jenkins/GitHub Actions
+- 🔄 Terraform deployment for ALB request count setup
+- 🔄 CloudWatch dashboards automation
+- 🔄 HTTPS support with ACM certificates
+- 🔄 Route53 DNS configuration
+- 🔄 WAF integration for security
+- 🔄 Multi-environment support (dev/staging/prod)
+- 🔄 Packer templates for Golden AMI automation
 
 ---
 
@@ -389,8 +543,9 @@ After completing both demos, you should be able to:
 **Happy auto-scaling!** 🚀
 
 ---
-
-**Last Updated:** January 2026  
-**Region:** ap-south-1 (Mumbai)  
-**VPC:** devops-vpc (existing infrastructure)  
-**AWS Services:** EC2, ALB, Auto Scaling, Aurora Serverless v2, Systems Manager, CloudWatch
+## 🧑‍💻 Author
+*Md. Sarowar Alam*  
+Lead DevOps Engineer, Hogarth Worldwide  
+📧 Email: sarowar@hotmail.com  
+🔗 LinkedIn: [linkedin.com/in/sarowar](https://www.linkedin.com/in/sarowar/)
+---

@@ -250,7 +250,9 @@ Your infrastructure is perfect for this demo! Follow the updated setup guides:
 Both guides are now updated to use your **devops-vpc** in **ap-south-1**.
 
 ---
-
-**Last Updated**: January 2026  
-**VPC Owner**: Your AWS Account  
-**Region**: ap-south-1 (Mumbai)
+## 🧑‍💻 Author
+*Md. Sarowar Alam*  
+Lead DevOps Engineer, Hogarth Worldwide  
+📧 Email: sarowar@hotmail.com  
+🔗 LinkedIn: [linkedin.com/in/sarowar](https://www.linkedin.com/in/sarowar/)
+---
