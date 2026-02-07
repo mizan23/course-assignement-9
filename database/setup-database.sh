@@ -1,7 +1,21 @@
 #!/bin/bash
 set -e
-
 cd /tmp
+
+ENV_FILE="$(dirname "$0")/../backend/.env"
+
+if [ ! -f "$ENV_FILE" ]; then
+  echo "[ERROR] .env file not found"
+  exit 1
+fi
+
+set -a
+source "$ENV_FILE"
+set +a
+
+echo "[INFO] Loaded environment variables"
+
+
 
 # Colors
 RED='\033[0;31m'
