@@ -1,47 +1,56 @@
+// Load environment variables FIRST
 require('dotenv').config();
-const express=require('express');
-const bodyParser=require('body-parser');
-const cors=require('cors');
-const routes=require('./routes');
 
-const app=express();
-const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const { Pool } = require('pg');
 
-// CORS configuration
-const corsOptions = {
-  origin: NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || 'http://localhost'
-    : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
+const app = express();
 
-app.use(cors(corsOptions));
+/* -------------------- Middleware -------------------- */
+app.use(cors());
 app.use(bodyParser.json());
 
-// Health check endpoint
+/* -------------------- Database -------------------- */
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  ssl: false
+});
+
+pool.on('connect', () => {
+  console.log('✅ Connected to PostgreSQL');
+});
+
+pool.on('error', (err) => {
+  console.error('❌ PostgreSQL error:', err);
+  process.exit(1);
+});
+
+/* -------------------- Routes -------------------- */
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', environment: NODE_ENV });
+  res.status(200).json({ status: 'OK' });
 });
 
-// API routes
-app.use('/api', routes);
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+app.get('/', (req, res) => {
+  res.json({ message: 'BMI Backend API is running' });
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+/* -------------------- Start Server -------------------- */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Backend running on port ${PORT}`);
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${NODE_ENV}`);
-  console.log(`🔗 API available at: http://localhost:${PORT}/api`);
-});
+/* -------------------- how to run -------------------- 
+
+pm2 delete bmi-backend
+pm2 start src/server.js --name bmi-backend
+pm2 save
+
+-------------------- Start Server -------------------- */

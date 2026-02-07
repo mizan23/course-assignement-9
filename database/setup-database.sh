@@ -27,7 +27,7 @@ NC='\033[0m' # No Color
 # Configuration
 DB_USER="bmi_user"
 DB_NAME="bmidb"
-DB_VERSION="14"  # PostgreSQL version
+DB_VERSION="16"  # PostgreSQL version
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

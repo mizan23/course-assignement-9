@@ -1,135 +1,63 @@
 #!/bin/bash
-# Frontend Deployment Script (runs on instance boot from Golden AMI)
-# This script clones the repo, builds React app, and configures nginx
-
 set -e
 
 LOG_FILE="/var/log/frontend-deploy.log"
 exec > >(tee -a ${LOG_FILE}) 2>&1
 
 echo "========================================="
-echo "Frontend Deployment Started: $(date)"
+echo "Frontend deployment started: $(date)"
 echo "========================================="
 
-# Get instance metadata
-INSTANCE_ID=$(ec2-metadata --instance-id | cut -d " " -f 2)
-REGION=$(ec2-metadata --availability-zone | cut -d " " -f 2 | sed 's/[a-z]$//')
+# ✅ Backend Internal ALB (already created)
+BACKEND_ALB_URL="http://internal-bmi-backend-alb-2130460227.eu-west-1.elb.amazonaws.com"
 
-echo "Instance ID: ${INSTANCE_ID}"
-echo "Region: ${REGION}"
+# Go to existing frontend code (NO GIT)
+cd /var/www/3-tier-web-app-auto-scalling/frontend
 
-# Fetch backend ALB URL from Parameter Store
-echo "Fetching backend ALB URL from Parameter Store..."
-BACKEND_ALB_URL=$(aws ssm get-parameter --name "/bmi-app/backend-alb-url" --region ${REGION} --query 'Parameter.Value' --output text)
-echo "Backend ALB URL: ${BACKEND_ALB_URL}"
-
-# Clone repository
-echo "Cloning repository..."
-cd /var/www
-if [ -d "app" ]; then
-    rm -rf app
-fi
-git clone https://github.com/sarowar-alam/3-tier-web-app-auto-scalling.git app
-cd app/frontend
-
-# Update API endpoint to use relative URL (nginx will proxy to backend ALB)
-echo "Updating API endpoint..."
+# Ensure API uses relative path
 cat > src/api.js << 'EOF'
 import axios from 'axios';
 
-const api = axios.create({
+export default axios.create({
   baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 10000,
 });
-
-export default api;
 EOF
 
-# Install dependencies
-echo "Installing npm dependencies..."
+# Install & build
 npm install
-
-# Build React app
-echo "Building React application..."
 npm run build
 
-# Configure nginx
-echo "Configuring nginx..."
-sudo tee /etc/nginx/conf.d/frontend.conf > /dev/null << 'EOF'
+# NGINX CONFIG
+sudo tee /etc/nginx/conf.d/frontend.conf > /dev/null <<EOF
 server {
     listen 80;
     server_name _;
-    root /var/www/app/frontend/dist;
+    root /var/www/3-tier-web-app-auto-scalling/frontend/dist;
     index index.html;
 
-    # Gzip compression
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/json;
-
-    # Main application
     location / {
-        try_files $uri $uri/ /index.html;
-        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        try_files \$uri /index.html;
     }
 
-    # Static assets caching
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Health check endpoint for ALB
     location /health {
-        access_log off;
-        return 200 "healthy\n";
+        return 200 "healthy";
         add_header Content-Type text/plain;
     }
 
-    # Proxy API requests to backend ALB
     location /api/ {
         proxy_pass ${BACKEND_ALB_URL}/api/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # Timeouts
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 EOF
 
-# Replace placeholder with actual backend URL in nginx config
-sudo sed -i "s|\${BACKEND_ALB_URL}|${BACKEND_ALB_URL}|g" /etc/nginx/conf.d/frontend.conf
-
-# Remove conflicting default server block from nginx.conf
-echo "Removing default nginx server block to avoid conflicts..."
-sudo sed -i '37,54s/^/# /' /etc/nginx/nginx.conf
-
-# Test nginx configuration
-echo "Testing nginx configuration..."
+# Restart nginx
 sudo nginx -t
-
-# Reload nginx
-echo "Reloading nginx..."
-sudo systemctl reload nginx
-
-# Ensure nginx is running
-sudo systemctl status nginx
+sudo systemctl restart nginx
 
 echo "========================================="
-echo "Frontend Deployment Complete: $(date)"
+echo "Frontend deployment complete"
 echo "========================================="
-echo "Application accessible on port 80"
-echo "Backend ALB: ${BACKEND_ALB_URL}"
